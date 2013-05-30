@@ -1,19 +1,1061 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script src="js/libs/documentup.js"></script>
-    <script>
-      DocumentUp.document({
-        repo:         "fnichol/chef-rbenv",
-        twitter:      "fnichol",
-        afterRender:  function() {
-          $('#sections a').html(function(index, heading) {
-            return heading.replace(/^&lt;.*\/a&gt; /, '');
-          });
-        }
-      });
-    </script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Chef-rbenv by fnichol</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
   </head>
-  <body></body>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Chef-rbenv</h1>
+        <p class="header">Chef cookbook for rbenv. Manages rbenv and its installed rubies. Several LWRPs are also defined.</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/fnichol/chef-rbenv/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/fnichol/chef-rbenv/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/fnichol/chef-rbenv">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/fnichol">fnichol</a></p>
+
+
+      </header>
+      <section>
+        <p><a href="http://travis-ci.org/fnichol/chef-rbenv"><img src="https://secure.travis-ci.org/fnichol/chef-rbenv.png?branch=master" alt="Build Status"></a></p>
+
+<h2>
+<a name="-description" class="anchor" href="#-description"><span class="octicon octicon-link"></span></a><a name="description"></a> Description</h2>
+
+<p>Manages <a href="https://github.com/sstephenson/rbenv">rbenv</a> and its installed Rubies.
+Several lightweight resources and providers (<a href="http://wiki.opscode.com/display/chef/Lightweight+Resources+and+Providers+%28LWRP%29">LWRPs</a>) are also defined.</p>
+
+<h2>
+<a name="-usage" class="anchor" href="#-usage"><span class="octicon octicon-link"></span></a><a name="usage"></a> Usage</h2>
+
+<h3>
+<a name="-rbenv-installed-system-wide-with-rubies" class="anchor" href="#-rbenv-installed-system-wide-with-rubies"><span class="octicon octicon-link"></span></a><a name="usage-system-rubies"></a> rbenv Installed System-Wide with Rubies</h3>
+
+<p>Most likely, this is the typical case. Include <code>recipe[rbenv::system]</code> in your
+run_list and override the defaults you want changed. See <a href="#attributes">below</a>
+for more details.</p>
+
+<p>If your platform is the Mac, you may need to modify your
+<a href="#mac-system-note">profile</a>.</p>
+
+<h3>
+<a name="-rbenv-installed-for-a-specific-user-with-rubies" class="anchor" href="#-rbenv-installed-for-a-specific-user-with-rubies"><span class="octicon octicon-link"></span></a><a name="usage-user-rubies"></a> rbenv Installed For A Specific User with Rubies</h3>
+
+<p>If you want a per-user install (like on a Mac/Linux workstation for
+development, CI, etc.), include <code>recipe[rbenv::user]</code> in your run_list and
+add a user hash to the <code>user_installs</code> attribute list. For example:</p>
+
+<pre><code>node.default['rbenv']['user_installs'] = [
+  { 'user'    =&gt; 'tflowers',
+    'rubies'  =&gt; ['1.9.3-p0', 'jruby-1.6.5'],
+    'global'  =&gt; '1.9.3-p0',
+    'gems'    =&gt; {
+      '1.9.3-p0'    =&gt; [
+        { 'name'    =&gt; 'bundler'
+          'version' =&gt; '1.1.rc.5'
+        },
+        { 'name'    =&gt; 'rake' }
+      ],
+      'jruby-1.6.5' =&gt; [
+        { 'name'    =&gt; 'rest-client' }
+      ]
+    }
+  }
+]
+</code></pre>
+
+<p>See <a href="#attributes">below</a> for more details.</p>
+
+<h3>
+<a name="-rbenv-installed-system-wide-and-lwrps-defined" class="anchor" href="#-rbenv-installed-system-wide-and-lwrps-defined"><span class="octicon octicon-link"></span></a><a name="usage-system"></a> rbenv Installed System-Wide and LWRPs Defined</h3>
+
+<p>If you want to manage your own rbenv environment with the provided
+LWRPs, then include <code>recipe[rbenv::system_install]</code> in your run_list
+to prevent a default rbenv Ruby being installed. See the
+<a href="#lwrps">Resources and Providers</a> section for more details.</p>
+
+<p>If your platform is the Mac, you may need to modify your
+<a href="#mac-system-note">profile</a>.</p>
+
+<h3>
+<a name="-rbenv-installed-for-a-specific-user-and-lwrps-defined" class="anchor" href="#-rbenv-installed-for-a-specific-user-and-lwrps-defined"><span class="octicon octicon-link"></span></a><a name="usage-user"></a> rbenv Installed For A Specific User and LWRPs Defined</h3>
+
+<p>If you want to manage your own rbenv environment for users with the provided
+LWRPs, then include <code>recipe[rbenv::user_install]</code> in your run_list and add a
+user hash to the <code>user_installs</code> attribute list. For example:</p>
+
+<pre><code>node.default['rbenv']['user_installs'] = [
+  { 'user' =&gt; 'tflowers' }
+]
+</code></pre>
+
+<p>See the <a href="#lwrps">Resources and Providers</a> section for more details.</p>
+
+<h3>
+<a name="-ultra-minimal-access-to-lwrps" class="anchor" href="#-ultra-minimal-access-to-lwrps"><span class="octicon octicon-link"></span></a><a name="usage-minimal"></a> Ultra-Minimal Access To LWRPs</h3>
+
+<p>Simply include <code>recipe[rbenv]</code> in your run_list and the LWRPs will be
+available to use in other cookboks. See the <a href="#lwrps">Resources and Providers</a>
+section for more details.</p>
+
+<h3>
+<a name="-other-use-cases" class="anchor" href="#-other-use-cases"><span class="octicon octicon-link"></span></a><a name="usage-other"></a> Other Use Cases</h3>
+
+<ul>
+<li>If node is running in a Vagrant VM, then including <code>recipe[rbenv::vagrant]</code>
+in your run_list can help with resolving the <em>chef-solo</em> binary on subsequent</li>
+</ul><h2>
+<a name="-requirements" class="anchor" href="#-requirements"><span class="octicon octicon-link"></span></a><a name="requirements"></a> Requirements</h2>
+
+<h3>
+<a name="-chef" class="anchor" href="#-chef"><span class="octicon octicon-link"></span></a><a name="requirements-chef"></a> Chef</h3>
+
+<p>Tested on 11.4.4 but newer and older version should work just
+fine. File an <a href="https://github.com/fnichol/chef-rbenv/issues">issue</a> if this isn't the case.</p>
+
+<h3>
+<a name="-platform" class="anchor" href="#-platform"><span class="octicon octicon-link"></span></a><a name="requirements-platform"></a> Platform</h3>
+
+<p>The following platforms have been tested with this cookbook, meaning that
+the recipes and LWRPs run on these platforms without error:</p>
+
+<ul>
+<li>ubuntu (10.04/12.04)</li>
+<li>debian (6.0)</li>
+<li>freebsd</li>
+<li>redhat</li>
+<li>centos</li>
+<li>fedora</li>
+<li>amazon</li>
+<li>scientific</li>
+<li>suse</li>
+<li>mac_os_x</li>
+</ul><p>Please <a href="https://github.com/fnichol/chef-rbenv/issues">report</a> any additional platforms so they can be added.</p>
+
+<h3>
+<a name="-cookbooks" class="anchor" href="#-cookbooks"><span class="octicon octicon-link"></span></a><a name="requirements-cookbooks"></a> Cookbooks</h3>
+
+<p>There are <strong>no</strong> external cookbook dependencies. However, if you
+want to manage Ruby installations or use the <code>rbenv_ruby</code> LWRP then you will
+need to include the <a href="http://community.opscode.com/cookbooks/ruby_build">ruby_build cookbook</a>.</p>
+
+<h2>
+<a name="-installation" class="anchor" href="#-installation"><span class="octicon octicon-link"></span></a><a name="installation"></a> Installation</h2>
+
+<p>Depending on the situation and use case there are several ways to install
+this cookbook. All the methods listed below assume a tagged version release
+is the target, but omit the tags to get the head of development. A valid
+Chef repository structure like the <a href="https://github.com/opscode/chef-repo">Opscode repo</a> is also assumed.</p>
+
+<h3>
+<a name="-using-berkshelf" class="anchor" href="#-using-berkshelf"><span class="octicon octicon-link"></span></a><a name="installation-berkshelf"></a> Using Berkshelf</h3>
+
+<p><a href="http://berkshelf.com/">Berkshelf</a> is a cookbook dependency manager and development
+workflow assistant. To install Berkshelf:</p>
+
+<pre><code>cd chef-repo
+gem install berkshelf
+berks init
+</code></pre>
+
+<p>To reference the Git version:</p>
+
+<pre><code>repo="fnichol/chef-rbenv"
+latest_release=$(curl -s https://api.github.com/repos/$repo/git/refs/tags \
+| ruby -rjson -e '
+  j = JSON.parse(STDIN.read);
+  puts j.map { |t| t["ref"].split("/").last }.sort.last
+')
+cat &gt;&gt; Berksfile &lt;&lt;END_OF_BERKSFILE
+cookbook 'rbenv',
+  :git =&gt; 'git://github.com/$repo.git', :branch =&gt; '$latest_release'
+END_OF_BERKSFILE
+berks install
+</code></pre>
+
+<h3>
+<a name="-using-librarian-chef" class="anchor" href="#-using-librarian-chef"><span class="octicon octicon-link"></span></a><a name="installation-librarian"></a> Using Librarian-Chef</h3>
+
+<p><a href="https://github.com/applicationsonline/librarian#readme">Librarian-Chef</a> is a bundler for your Chef cookbooks.
+To install Librarian-Chef:</p>
+
+<pre><code>cd chef-repo
+gem install librarian
+librarian-chef init
+</code></pre>
+
+<p>To reference the Git version:</p>
+
+<pre><code>repo="fnichol/chef-rbenv"
+latest_release=$(curl -s https://api.github.com/repos/$repo/git/refs/tags \
+| ruby -rjson -e '
+  j = JSON.parse(STDIN.read);
+  puts j.map { |t| t["ref"].split("/").last }.sort.last
+')
+cat &gt;&gt; Cheffile &lt;&lt;END_OF_CHEFFILE
+cookbook 'rbenv',
+  :git =&gt; 'git://github.com/$repo.git', :ref =&gt; '$latest_release'
+END_OF_CHEFFILE
+librarian-chef install
+</code></pre>
+
+<h3>
+<a name="-from-the-community-site" class="anchor" href="#-from-the-community-site"><span class="octicon octicon-link"></span></a><a name="installation-platform"></a> From the Community Site</h3>
+
+<p>This cookbook is not currently available on the site due to the flat
+namespace for cookbooks.</p>
+
+<h2>
+<a name="-recipes" class="anchor" href="#-recipes"><span class="octicon octicon-link"></span></a><a name="recipes"></a> Recipes</h2>
+
+<h3>
+<a name="-default" class="anchor" href="#-default"><span class="octicon octicon-link"></span></a><a name="recipes-default"></a> default</h3>
+
+<p>Installs the rbenv gem and initializes Chef to use the Lightweight Resources
+and Providers (<a href="http://wiki.opscode.com/display/chef/Lightweight+Resources+and+Providers+%28LWRP%29">LWRPs</a>).</p>
+
+<p>Use this recipe explicitly if you only want access to the LWRPs provided.</p>
+
+<h3>
+<a name="-system_install" class="anchor" href="#-system_install"><span class="octicon octicon-link"></span></a><a name="recipes-system-install"></a> system_install</h3>
+
+<p>Installs the rbenv codebase system-wide (that is, into <code>/usr/local/rbenv</code>). This
+recipe includes <em>default</em>.</p>
+
+<p>Use this recipe by itself if you want rbenv installed system-wide but want
+to handle installing Rubies, invoking LWRPs, etc..</p>
+
+<h3>
+<a name="-system" class="anchor" href="#-system"><span class="octicon octicon-link"></span></a><a name="recipes-system"></a> system</h3>
+
+<p>Installs the rbenv codebase system-wide (that is, into <code>/usr/local/rbenv</code>) and
+installs rubies driven off attribute metadata. This recipe includes <em>default</em>
+and <em>system_install</em>.</p>
+
+<p>Use this recipe by itself if you want rbenv installed system-wide with rubies
+installed.</p>
+
+<h3>
+<a name="-user_install" class="anchor" href="#-user_install"><span class="octicon octicon-link"></span></a><a name="recipes-user-install"></a> user_install</h3>
+
+<p>Installs the rbenv codebase for a list of users (selected from the
+<code>node['rbenv']['user_installs']</code> hash). This recipe includes <em>default</em>.</p>
+
+<p>Use this recipe by itself if you want rbenv installed for specific users in
+isolation but want each user to handle installing Rubies, invoking LWRPs, etc.</p>
+
+<h3>
+<a name="-user" class="anchor" href="#-user"><span class="octicon octicon-link"></span></a><a name="recipes-user"></a> user</h3>
+
+<p>Installs the rbenv codebase for a list of users (selected from the
+<code>node['rbenv']['user_installs']</code> hash) and installs rubies driven off attribte
+metadata. This recipe includes <em>default</em> and <em>user_install</em>.</p>
+
+<p>Use this recipe by itself if you want rbenv installed for specific users in
+isolation with rubies installed.</p>
+
+<h3>
+<a name="-vagrant" class="anchor" href="#-vagrant"><span class="octicon octicon-link"></span></a><a name="recipes-vagrant"></a> vagrant</h3>
+
+<p>An optional recipe if Chef is installed in a non-rbenv Ruby in a
+[Vagrant][vagrant] virtual machine. This recipe installs a <code>chef-solo</code>
+wrapper script so Chef doesn't need to be re-installed in the global rbenv Ruby.</p>
+
+<h2>
+<a name="-attributes" class="anchor" href="#-attributes"><span class="octicon octicon-link"></span></a><a name="attributes"></a> Attributes</h2>
+
+<h3>
+<a name="-git_url" class="anchor" href="#-git_url"><span class="octicon octicon-link"></span></a><a name="attributes-git-url"></a> git_url</h3>
+
+<p>The Git URL which is used to install rbenv.</p>
+
+<p>The default is <code>"git://github.com/sstephenson/rbenv.git"</code>.</p>
+
+<h3>
+<a name="-git_ref" class="anchor" href="#-git_ref"><span class="octicon octicon-link"></span></a><a name="attributes-git-ref"></a> git_ref</h3>
+
+<p>A specific Git branch/tag/reference to use when installing rbenv. For
+example, to pin rbenv to a specific release:</p>
+
+<pre><code>node.default['ruby_build']['git_ref'] = "v0.2.1"
+</code></pre>
+
+<p>The default is <code>"v0.4.0"</code>.</p>
+
+<h3>
+<a name="-upgrade" class="anchor" href="#-upgrade"><span class="octicon octicon-link"></span></a><a name="attributes-upgrade"></a> upgrade</h3>
+
+<p>Determines how to handle installing updates to the rbenv. There are currently
+2 valid values:</p>
+
+<ul>
+<li>
+<code>"none"</code>, <code>false</code>, or <code>nil</code>: will not update rbenv and leave it in its
+current state.</li>
+<li>
+<code>"sync"</code> or <code>true</code>: updates rbenv to the version specified by the
+<code>git_ref</code> attribute or the head of the master branch by default.</li>
+</ul><p>The default is <code>"none"</code>.</p>
+
+<h3>
+<a name="-root_path" class="anchor" href="#-root_path"><span class="octicon octicon-link"></span></a><a name="attributes-root-path"></a> root_path</h3>
+
+<p>The path prefix to rbenv in a system-wide installation.</p>
+
+<p>The default is <code>"/usr/local/rbenv"</code>.</p>
+
+<h3>
+<a name="-rubies" class="anchor" href="#-rubies"><span class="octicon octicon-link"></span></a><a name="attributes-rubies"></a> rubies</h3>
+
+<p>A list of additional system-wide rubies to be built and installed using the
+<a href="http://community.opscode.com/cookbooks/ruby_build">ruby_build cookbook</a>. You <strong>must</strong> include <code>recipe[ruby_build]</code>
+in your run_list for the <code>rbenv_ruby</code> LWRP to work properly. For example:</p>
+
+<pre><code>node.default['rbenv']['rubies'] = [ "1.9.3-p0", "jruby-1.6.5" ]
+</code></pre>
+
+<p>The default is an empty array: <code>[]</code>.</p>
+
+<p>Additional environment variables can be passed to ruby_build via the environment variable.
+For example:</p>
+
+<pre><code>node.default['rbenv']['rubies'] = [ "1.9.3-p0", "jruby-1.6.5",
+  {
+  :name =&gt; '1.9.3-327',
+  :environment =&gt; { 'CFLAGS' =&gt; '-march=native -O2 -pipe' }
+  }
+]
+</code></pre>
+
+<h3>
+<a name="-user_rubies" class="anchor" href="#-user_rubies"><span class="octicon octicon-link"></span></a><a name="attributes-user-rubies"></a> user_rubies</h3>
+
+<p>A list of additional system-wide rubies to be built and installed (using the
+<a href="http://community.opscode.com/cookbooks/ruby_build">ruby_build cookbook</a>) per-user when not explicitly set.
+For example:</p>
+
+<pre><code>node.default['rbenv']['user_rubies'] = [ "1.8.7-p352" ]
+</code></pre>
+
+<p>The default is an empty array: <code>[]</code>.</p>
+
+<p>Additional environment variables can be passed to ruby_build via the environment variable.
+For example:</p>
+
+<pre><code>node.default['rbenv']['user_rubies'] = [ "1.8.7-p352",
+  {
+  :name =&gt; '1.9.3-327',
+  :environment =&gt; { 'CFLAGS' =&gt; '-march=native -O2 -pipe' }
+  }
+]
+</code></pre>
+
+<h3>
+<a name="-gems" class="anchor" href="#-gems"><span class="octicon octicon-link"></span></a><a name="attributes-gems"></a> gems</h3>
+
+<p>A hash of gems to be installed into arbitrary rbenv-managed rubies system wide.
+See the <a href="#lwrps-rbgem">rbenv_gem</a> resource for more details about the options
+for each gem hash and target Ruby environment. For example:</p>
+
+<pre><code>node.default['rbenv']['gems'] = {
+  '1.9.3-p0' =&gt; [
+    { 'name'    =&gt; 'vagrant' },
+    { 'name'    =&gt; 'bundler'
+      'version' =&gt; '1.1.rc.5'
+    }
+  ],
+  '1.8.7-p352' =&gt; [
+    { 'name'    =&gt; 'nokogiri' }
+  ]
+}
+</code></pre>
+
+<p>The default is an empty hash: <code>{}</code>.</p>
+
+<h3>
+<a name="-user_gems" class="anchor" href="#-user_gems"><span class="octicon octicon-link"></span></a><a name="attributes-user-gems"></a> user_gems</h3>
+
+<p>A hash of gems to installed into arbitrary rbenv-managed rubies for each user
+when not explicitly set. See the <a href="#lwrps-rbgem">rbenv_gem</a> resource for more
+details about the options for each gem hash and target Ruby environment. See
+the <a href="#attributes-gems">gems attribute</a> for an example.</p>
+
+<p>The default is an empty hash: <code>{}</code>.</p>
+
+<h3>
+<a name="-vagrantsystem_chef_solo" class="anchor" href="#-vagrantsystem_chef_solo"><span class="octicon octicon-link"></span></a><a name="attributes-vagrant-system-chef-solo"></a> vagrant/system_chef_solo</h3>
+
+<p>If using the <code>vagrant</code> recipe, this sets the path to the package-installed
+<em>chef-solo</em> binary.</p>
+
+<p>The default is <code>"/opt/ruby/bin/chef-solo"</code>.</p>
+
+<h3>
+<a name="-create_profiled" class="anchor" href="#-create_profiled"><span class="octicon octicon-link"></span></a><a name="attributes-create-profiled"></a> create_profiled</h3>
+
+<p>The user's shell needs to know about rbenv's location and set up the
+PATH environment variable. This is handled in the
+<a href="#recipes-system_install">system_install</a> and
+<a href="#recipes-user_install">user_install</a> recipes by dropping off
+<code>/etc/profile.d/rbenv.sh</code>. However, this requires root privilege,
+which means that a user cannot use a "user install" for only their
+user.</p>
+
+<p>Set this attribute to <code>false</code> to skip creation of the
+<code>/etc/profile.d/rbenv.sh</code> template. For example:</p>
+
+<pre><code>node.default['rbenv']['create_profiled'] = false
+</code></pre>
+
+<p>The default is <code>true</code>.</p>
+
+<h2>
+<a name="-resources-and-providers" class="anchor" href="#-resources-and-providers"><span class="octicon octicon-link"></span></a><a name="lwrps"></a> Resources and Providers</h2>
+
+<h3>
+<a name="-rbenv_global" class="anchor" href="#-rbenv_global"><span class="octicon octicon-link"></span></a><a name="lwrps-rg"></a> rbenv_global</h3>
+
+<p>This resource sets the global version of Ruby to be used in all shells, as per
+the <a href="https://github.com/sstephenson/rbenv#section_3.1">rbenv global docs</a>.</p>
+
+<h4>
+<a name="-actions" class="anchor" href="#-actions"><span class="octicon octicon-link"></span></a><a name="lwrps-rg-actions"></a> Actions</h4>
+
+<table>
+<tr>
+<th>Action</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+<tr>
+<td>create</td>
+      <td>
+        Sets the global version of Ruby to be used in all shells. See 3.1
+        rbenv global<sup>(1)</sup> for more details.
+      </td>
+      <td>Yes</td>
+    </tr>
+</table><ol>
+<li><a href="https://github.com/sstephenson/rbenv#section_3.1">3.1 rbenv global</a></li>
+</ol><h4>
+<a name="-attributes-1" class="anchor" href="#-attributes-1"><span class="octicon octicon-link"></span></a><a name="lwrps-rg-attributes"></a> Attributes</h4>
+
+<table>
+<tr>
+<th>Attribute</th>
+      <th>Description</th>
+      <th>Default Value</th>
+    </tr>
+<tr>
+<td>rbenv_version</td>
+      <td>
+        <b>Name attribute:</b> a version of Ruby being managed by rbenv.
+        <b>Note:</b> the version of Ruby must already be installed--this LWRP
+        will not install it automatically.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>user</td>
+      <td>
+        A users's isolated rbenv installation on which to apply an action. The
+        default value of <code>nil</code> denotes a system-wide rbenv
+        installation is being targeted. <b>Note:</b> if specified, the user
+        must already exist.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>root_path</td>
+      <td>
+        The path prefix to rbenv installation, for example:
+        <code>/opt/rbenv</code>.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+</table><h4>
+<a name="-examples" class="anchor" href="#-examples"><span class="octicon octicon-link"></span></a><a name="lwrps-rg-examples"></a> Examples</h4>
+
+<h5>
+<a name="set-a-ruby-as-global" class="anchor" href="#set-a-ruby-as-global"><span class="octicon octicon-link"></span></a>Set A Ruby As Global</h5>
+
+<pre><code>rbenv_global "1.8.7-p352"
+</code></pre>
+
+<h5>
+<a name="set-system-ruby-as-global" class="anchor" href="#set-system-ruby-as-global"><span class="octicon octicon-link"></span></a>Set System Ruby As Global</h5>
+
+<pre><code>rbenv_global "system"
+</code></pre>
+
+<h5>
+<a name="set-a-ruby-as-global-for-a-user" class="anchor" href="#set-a-ruby-as-global-for-a-user"><span class="octicon octicon-link"></span></a>Set A Ruby As Global For A User</h5>
+
+<pre><code>rbenv_global "jruby-1.7.0-dev" do
+  user "tflowers"
+end
+</code></pre>
+
+<h3>
+<a name="-rbenv_script" class="anchor" href="#-rbenv_script"><span class="octicon octicon-link"></span></a><a name="lwrps-rsc"></a> rbenv_script</h3>
+
+<p>This resource is a wrapper for the <code>script</code> resource which wraps the code block
+in an rbenv-aware environment. See the Opscode
+<a href="http://wiki.opscode.com/display/chef/Resources#Resources-Script">script resource</a> page and the <a href="https://github.com/sstephenson/rbenv#section_3.3">rbenv shell</a>
+documentation for more details.</p>
+
+<h4>
+<a name="-actions-1" class="anchor" href="#-actions-1"><span class="octicon octicon-link"></span></a><a name="lwrps-rsc-actions"></a> Actions</h4>
+
+<table>
+<tr>
+<th>Action</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+<tr>
+<td>run</td>
+      <td>Run the script</td>
+      <td>Yes</td>
+    </tr>
+<tr>
+<td>nothing</td>
+      <td>Do not run this command</td>
+      <td> </td>
+    </tr>
+</table><p>Use <code>action :nothing</code> to set a command to only run if another resource
+notifies it.</p>
+
+<h4>
+<a name="-attributes-2" class="anchor" href="#-attributes-2"><span class="octicon octicon-link"></span></a><a name="lwrps-rsc-attributes"></a> Attributes</h4>
+
+<table>
+<tr>
+<th>Attribute</th>
+      <th>Description</th>
+      <th>Default Value</th>
+    </tr>
+<tr>
+<td>name</td>
+      <td>
+        <b>Name attribute:</b> Name of the command to execute.
+      </td>
+      <td>name</td>
+    </tr>
+<tr>
+<td>rbenv_version</td>
+      <td>
+        A version of Ruby being managed by rbenv.
+      </td>
+      <td><code>"global"</code></td>
+    </tr>
+<tr>
+<td>root_path</td>
+      <td>
+        The path prefix to rbenv installation, for example:
+        <code>/opt/rbenv</code>.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>code</td>
+      <td>
+        Quoted script of code to execute.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>creates</td>
+      <td>
+        A file this command creates - if the file exists, the command will not
+        be run.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>cwd</td>
+      <td>
+        Current working director to run the command from.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>environment</td>
+      <td>
+        A has of environment variables to set before running this command.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>group</td>
+      <td>
+        A group or group ID that we should change to before running this
+        command.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>path</td>
+      <td>
+        An array of paths to use when searching for the command.
+      </td>
+      <td>
+<code>nil</code>, uses system path</td>
+    </tr>
+<tr>
+<td>returns</td>
+      <td>
+        The return value of the command (may be an array of accepted values) -
+        this resource raises an exception if the return value(s) do not match.
+      </td>
+      <td><code>0</code></td>
+    </tr>
+<tr>
+<td>timeout</td>
+      <td>
+        How many seconds to let the command run before timing out.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>user</td>
+      <td>
+        A users's isolated rbenv installation on which to apply an action. The
+        default value of <code>nil</code> denotes a system-wide rbenv
+        installation is being targeted. <b>Note:</b> if specified, the user
+        must already exist.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>umask</td>
+      <td>
+        Umask for files created by the command.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+</table><h4>
+<a name="-examples-1" class="anchor" href="#-examples-1"><span class="octicon octicon-link"></span></a><a name="lwrps-rsc-examples"></a> Examples</h4>
+
+<h5>
+<a name="run-a-rake-task" class="anchor" href="#run-a-rake-task"><span class="octicon octicon-link"></span></a>Run A Rake Task</h5>
+
+<pre><code>rbenv_script "migrate_rails_database" do
+  rbenv_version "1.8.7-p352"
+  user          "deploy"
+  group         "deploy"
+  cwd           "/srv/webapp/current"
+  code          %{rake RAILS_ENV=production db:migrate}
+end
+</code></pre>
+
+<h3>
+<a name="-rbenv_gem" class="anchor" href="#-rbenv_gem"><span class="octicon octicon-link"></span></a><a name="lwrps-rbgem"></a> rbenv_gem</h3>
+
+<p>This resource is a close analog of the <code>gem_package</code> resource/provider which
+is rbenv-aware. See the Opscode <a href="http://wiki.opscode.com/display/chef/Resources#Resources-Package">package resource</a> and
+<a href="http://wiki.opscode.com/display/chef/Resources#Resources-GemPackageOptions">gem package options</a> pages for more details.</p>
+
+<h4>
+<a name="-actions-2" class="anchor" href="#-actions-2"><span class="octicon octicon-link"></span></a><a name="lwrps-rbgem-actions"></a> Actions</h4>
+
+<table>
+<tr>
+<th>Action</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+<tr>
+<td>install</td>
+      <td>
+        Install a gem - if version is provided, install that specific version.
+      </td>
+      <td>Yes</td>
+    </tr>
+<tr><td>
+<td>
+        Upgrade a gem - if version is provided, upgrade to that specific
+        version.
+      </td>
+      <td> </td>
+    </td></tr>
+<tr>
+<td>remove</td>
+      <td>
+        Remove a gem.
+      </td>
+      <td> </td>
+    </tr>
+<tr>
+<td>purge</td>
+      <td>
+        Purge a gem.
+      </td>
+      <td> </td>
+    </tr>
+</table><h4>
+<a name="-attributes-3" class="anchor" href="#-attributes-3"><span class="octicon octicon-link"></span></a><a name="lwrps-rbr-attributes"></a> Attributes</h4>
+
+<table>
+<tr>
+<th>Attribute</th>
+      <th>Description</th>
+      <th>Default Value</th>
+    </tr>
+<tr>
+<td>package_name</td>
+      <td>
+        <b>Name attribute:</b> the name of the gem to install.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>rbenv_version</td>
+      <td>
+        A version of Ruby being managed by rbenv.
+      </td>
+      <td><code>"global"</code></td>
+    </tr>
+<tr>
+<td>root_path</td>
+      <td>
+        The path prefix to rbenv installation, for example:
+        <code>/opt/rbenv</code>.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>version</td>
+      <td>
+        The specific version of the gem to install/upgrade.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>options</td>
+      <td>
+        Add additional options to the underlying gem command.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>source</td>
+      <td>
+        Provide an additional source for gem providers (such as RubyGems).
+        This can also include a file system path to a <code>.gem</code> file
+        such as <code>/tmp/json-1.5.1.gem</code>.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>user</td>
+      <td>
+        A users's isolated rbenv installation on which to apply an action. The
+        default value of <code>nil</code> denotes a system-wide rbenv
+        installation is being targeted. <b>Note:</b> if specified, the user
+        must already exist.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+</table><h4>
+<a name="-examples-2" class="anchor" href="#-examples-2"><span class="octicon octicon-link"></span></a><a name="lwrps-rbgem-examples"></a> Examples</h4>
+
+<h5>
+<a name="install-a-gem" class="anchor" href="#install-a-gem"><span class="octicon octicon-link"></span></a>Install A Gem</h5>
+
+<pre><code>rbenv_gem "thor" do
+  rbenv_version   "1.8.7-p352"
+  action          :install
+end
+
+rbenv_gem "json" do
+  rbenv_version   "1.8.7-p330"
+end
+
+rbenv_gem "nokogiri" do
+  rbenv_version   "jruby-1.5.6"
+  version         "1.5.0.beta.4"
+  action          :install
+end
+</code></pre>
+
+<p><strong>Note:</strong> the install action is default, so the second example is a more common
+usage.</p>
+
+<h5>
+<a name="install-a-gem-from-a-local-file" class="anchor" href="#install-a-gem-from-a-local-file"><span class="octicon octicon-link"></span></a>Install A Gem From A Local File</h5>
+
+<pre><code>rbenv_gem "json" do
+  rbenv_version   "ree-1.8.7-2011.03"
+  source          "/tmp/json-1.5.1.gem"
+  version         "1.5.1"
+end
+</code></pre>
+
+<h5>
+<a name="keep-a-gem-up-to-date" class="anchor" href="#keep-a-gem-up-to-date"><span class="octicon octicon-link"></span></a>Keep A Gem Up To Date</h5>
+
+<pre><code>rbenv_gem "homesick" do
+  action :upgrade
+end
+</code></pre>
+
+<p><strong>Note:</strong> the global rbenv Ruby will be targeted if no <code>rbenv_version</code> attribute
+is given.</p>
+
+<h5>
+<a name="remove-a-gem" class="anchor" href="#remove-a-gem"><span class="octicon octicon-link"></span></a>Remove A Gem</h5>
+
+<pre><code>rbenv_gem "nokogiri" do
+  rbenv_version   "jruby-1.5.6"
+  version         "1.4.4.2"
+  action          :remove
+end
+</code></pre>
+
+<h3>
+<a name="-rbenv_rehash" class="anchor" href="#-rbenv_rehash"><span class="octicon octicon-link"></span></a><a name="lwrps-rrh"></a> rbenv_rehash</h3>
+
+<p>This resource installs shims for all Ruby binaries known to rbenv, as per
+the <a href="https://github.com/sstephenson/rbenv#section_3.6">rbenv rehash docs</a>.</p>
+
+<h4>
+<a name="-actions-3" class="anchor" href="#-actions-3"><span class="octicon octicon-link"></span></a><a name="lwrps-rrh-actions"></a> Actions</h4>
+
+<table>
+<tr>
+<th>Action</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+<tr>
+<td>run</td>
+      <td>Run the script</td>
+      <td>Yes</td>
+    </tr>
+<tr>
+<td>nothing</td>
+      <td>Do not run this command</td>
+      <td> </td>
+    </tr>
+</table><p>Use <code>action :nothing</code> to set a command to only run if another resource
+notifies it.</p>
+
+<h4>
+<a name="-attributes-4" class="anchor" href="#-attributes-4"><span class="octicon octicon-link"></span></a><a name="lwrps-rrh-attributes"></a> Attributes</h4>
+
+<table>
+<tr>
+<th>Attribute</th>
+      <th>Description</th>
+      <th>Default Value</th>
+    </tr>
+<tr>
+<td>name</td>
+      <td>
+        <b>Name attribute:</b> Name of the command to execute.
+      </td>
+      <td>name</td>
+    </tr>
+<tr>
+<td>user</td>
+      <td>
+        A users's isolated rbenv installation on which to apply an action. The
+        default value of <code>nil</code> denotes a system-wide rbenv
+        installation is being targeted. <b>Note:</b> if specified, the user
+        must already exist.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>root_path</td>
+      <td>
+        The path prefix to rbenv installation, for example:
+        <code>/opt/rbenv</code>.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+</table><h4>
+<a name="-examples-3" class="anchor" href="#-examples-3"><span class="octicon octicon-link"></span></a><a name="lwrps-rrh-examples"></a> Examples</h4>
+
+<h5>
+<a name="rehash-a-system-wide-rbenv" class="anchor" href="#rehash-a-system-wide-rbenv"><span class="octicon octicon-link"></span></a>Rehash A System-Wide rbenv</h5>
+
+<pre><code>rbenv_rehash "Doing the rehash dance"
+</code></pre>
+
+<h5>
+<a name="rehash-a-users-rbenv" class="anchor" href="#rehash-a-users-rbenv"><span class="octicon octicon-link"></span></a>Rehash A User's rbenv</h5>
+
+<pre><code>rbenv_rehash "Rehashing tflowers' rbenv" do
+  user  "tflowers"
+end
+</code></pre>
+
+<h3>
+<a name="-rbenv_ruby" class="anchor" href="#-rbenv_ruby"><span class="octicon octicon-link"></span></a><a name="lwrps-rbr"></a> rbenv_ruby</h3>
+
+<p>This resource uses the <a href="https://github.com/sstephenson/ruby-build">ruby-build</a> framework to build and install
+Ruby versions from definition files.</p>
+
+<p><strong>Note:</strong> this LWRP requires the <a href="http://community.opscode.com/cookbooks/ruby_build">ruby_build cookbook</a> to be
+in the run list to perform the builds.</p>
+
+<h4>
+<a name="-actions-4" class="anchor" href="#-actions-4"><span class="octicon octicon-link"></span></a><a name="lwrps-rbr-actions"></a> Actions</h4>
+
+<table>
+<tr>
+<th>Action</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+<tr>
+<td>install</td>
+      <td>
+        Build and install a Ruby from a definition file. See the ruby-build
+        readme<sup>(1)</sup> for more details.
+      </td>
+      <td>Yes</td>
+    </tr>
+<tr>
+<td>reinstall</td>
+      <td>
+        Force a recompiliation of the Ruby from source. The :install action
+        will skip a build if the target install directory already exists.
+      </td>
+      <td> </td>
+    </tr>
+</table><ol>
+<li><a href="https://github.com/sstephenson/ruby-build#readme">ruby-build readme</a></li>
+</ol><h4>
+<a name="-attributes-5" class="anchor" href="#-attributes-5"><span class="octicon octicon-link"></span></a><a name="lwrps-rbr-attributes"></a> Attributes</h4>
+
+<table>
+<tr>
+<th>Attribute</th>
+      <th>Description</th>
+      <th>Default Value</th>
+    </tr>
+<tr>
+<td>definition</td>
+      <td>
+        <b>Name attribute:</b> the name of a built-in definition<sup>(1)</sup>
+        or the path to a ruby-build definition file.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>user</td>
+      <td>
+        A users's isolated rbenv installation on which to apply an action. The
+        default value of <code>nil</code> denotes a system-wide rbenv
+        installation is being targeted. <b>Note:</b> if specified, the user
+        must already exist.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+<tr>
+<td>root_path</td>
+      <td>
+        The path prefix to rbenv installation, for example:
+        <code>/opt/rbenv</code>.
+      </td>
+      <td><code>nil</code></td>
+    </tr>
+</table><ol>
+<li><a href="https://github.com/sstephenson/ruby-build/tree/master/share/ruby-build">built-in definition</a></li>
+</ol><h4>
+<a name="-examples-4" class="anchor" href="#-examples-4"><span class="octicon octicon-link"></span></a><a name="lwrps-rbr-examples"></a> Examples</h4>
+
+<h5>
+<a name="install-ruby-from-ruby-build" class="anchor" href="#install-ruby-from-ruby-build"><span class="octicon octicon-link"></span></a>Install Ruby From ruby-build</h5>
+
+<pre><code>rbenv_ruby "ree-1.8.7-2011.03" do
+  action :install
+end
+
+rbenv_ruby "jruby-1.6.5"
+</code></pre>
+
+<p><strong>Note:</strong> the install action is default, so the second example is a more common
+usage.</p>
+
+<h5>
+<a name="reinstall-ruby" class="anchor" href="#reinstall-ruby"><span class="octicon octicon-link"></span></a>Reinstall Ruby</h5>
+
+<pre><code>rbenv_ruby "ree-1.8.7-2011.03" do
+  action :reinstall
+end
+</code></pre>
+
+<h2>
+<a name="-system-wide-mac-installation-note" class="anchor" href="#-system-wide-mac-installation-note"><span class="octicon octicon-link"></span></a><a name="mac-system-note"></a> System-Wide Mac Installation Note</h2>
+
+<p>This cookbook takes advantage of managing profile fragments in an
+<code>/etc/profile.d</code> directory, common on most Unix-flavored platforms.
+Unfortunately, Mac OS X does not support this idiom out of the box,
+so you may need to <a href="http://hints.macworld.com/article.php?story=20011221192012445">modify</a> your user profile.</p>
+
+<h2>
+<a name="-development" class="anchor" href="#-development"><span class="octicon octicon-link"></span></a><a name="development"></a> Development</h2>
+
+<ul>
+<li>Source hosted at <a href="https://github.com/fnichol/chef-rbenv">GitHub</a>
+</li>
+<li>Report issues/Questions/Feature requests on <a href="https://github.com/fnichol/chef-rbenv/issues">GitHub Issues</a>
+</li>
+</ul><p>Pull requests are very welcome! Make sure your patches are well tested.
+Ideally create a topic branch for every separate change you make.</p>
+
+<h2>
+<a name="-license-and-author" class="anchor" href="#-license-and-author"><span class="octicon octicon-link"></span></a><a name="license"></a> License and Author</h2>
+
+<p>Author:: <a href="https://github.com/fnichol">Fletcher Nichol</a> (<a href="mailto:fnichol@nichol.ca">fnichol@nichol.ca</a>) <a href="http://coderwall.com/fnichol"><img src="http://api.coderwall.com/fnichol/endorsecount.png" alt="endorse"></a></p>
+
+<p>Copyright 2011, Fletcher Nichol</p>
+
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<pre><code>http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		          <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-29670723-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
 </html>
